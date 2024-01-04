@@ -20,7 +20,7 @@ func main() {
 	// err = db.AutoMigrate(&models.UserBasic{})
 	// err = db.AutoMigrate(&models.Message{})
 	err = db.AutoMigrate(&models.GroupBasic{})
-	err = db.AutoMigrate(&models.Contact{})
+	//err = db.AutoMigrate(&models.Contact{})
 	if err != nil {
 		fmt.Println(err)
 		return

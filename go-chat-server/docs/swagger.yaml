@@ -47,23 +47,23 @@ paths:
       description: 用户模块
       parameters:
       - description: 用户名
-        in: query
+        in: formData
         name: name
         type: string
       - description: 密码
-        in: query
+        in: formData
         name: paw
         type: string
       - description: 核对密码
-        in: query
+        in: formData
         name: rePaw
         type: string
       - description: PhoneNum
-        in: query
+        in: formData
         name: phoneNum
         type: string
       - description: Email
-        in: query
+        in: formData
         name: email
         type: string
       produces:

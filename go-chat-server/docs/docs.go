@@ -93,31 +93,31 @@ const docTemplate = `{
                         "type": "string",
                         "description": "用户名",
                         "name": "name",
-                        "in": "query"
+                        "in": "formData"
                     },
                     {
                         "type": "string",
                         "description": "密码",
                         "name": "paw",
-                        "in": "query"
+                        "in": "formData"
                     },
                     {
                         "type": "string",
                         "description": "核对密码",
                         "name": "rePaw",
-                        "in": "query"
+                        "in": "formData"
                     },
                     {
                         "type": "string",
                         "description": "PhoneNum",
                         "name": "phoneNum",
-                        "in": "query"
+                        "in": "formData"
                     },
                     {
                         "type": "string",
                         "description": "Email",
                         "name": "email",
-                        "in": "query"
+                        "in": "formData"
                     }
                 ],
                 "responses": {

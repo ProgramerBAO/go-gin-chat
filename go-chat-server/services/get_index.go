@@ -1,6 +1,10 @@
 package services
 
-import "github.com/gin-gonic/gin"
+import (
+	"fmt"
+	"github.com/gin-gonic/gin"
+	"html/template"
+)
 
 // GetIndex godoc
 // @Summary ping example
@@ -12,7 +16,16 @@ import "github.com/gin-gonic/gin"
 // @Success 200 {string} Helloworld
 // @Router /index [get]
 func GetIndex(ctx *gin.Context) {
-	ctx.JSON(200, gin.H{
-		"meg": "welcome",
-	})
+	ind, err := template.ParseFiles("index.html")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	err = ind.Execute(ctx.Writer, "index")
+	if err != nil {
+		return
+	}
+	//ctx.JSON(200, gin.H{
+	//	"meg": "welcome",
+	//})
 }

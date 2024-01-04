@@ -9,6 +9,7 @@ import (
 	"go-gin-chat-server/utils"
 	"gorm.io/gorm"
 	"math/rand"
+	"net/http"
 	"strconv"
 )
 
@@ -37,19 +38,32 @@ func GetUsers(ctx *gin.Context) {
 // @Tags Users
 // @Accept json
 // @Produce json
-// @param name query string false "用户名"
-// @param paw query string false "密码"
-// @param rePaw query string false "核对密码"
-// @param phoneNum query string false "PhoneNum"
-// @param email query string false "Email"
+// @param name formData string false "用户名"
+// @param paw formData string false "密码"
+// @param rePaw formData string false "核对密码"
+// @param phoneNum formData string false "PhoneNum"
+// @param email formData string false "Email"
 // @Success 200 {string} Ok
 // @Router /user/createUser [get]
 func CreateUser(ctx *gin.Context) {
+	var requestRegisterUser struct {
+		UserName     string `json:"name"`
+		UserPwd      string `json:"pwd"`
+		UserRePwd    string `json:"rePwd"`
+		UserPhoneNum string `json:"phoneNum"`
+		UserEmail    string `json:"email"`
+	}
 	// 注意这里取地址
 	// 直接判断
-	user, err := models.FindUserByName(ctx.Query("name"))
-	user, err = models.FindUserByPhone(ctx.Query("phoneNum"))
-	user, err = models.FindUserByEmail(ctx.Query("email"))
+	fmt.Println(requestRegisterUser)
+	// 将前端发送的JSON数据绑定到requestData结构体中
+	if err := ctx.ShouldBindJSON(&requestRegisterUser); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"message": "无效的请求数据"})
+		return
+	}
+	user, err := models.FindUserByName(requestRegisterUser.UserName)
+	user, err = models.FindUserByPhone(requestRegisterUser.UserPhoneNum)
+	user, err = models.FindUserByEmail(requestRegisterUser.UserEmail)
 	// 不存在记录
 	if err != gorm.ErrRecordNotFound {
 		fmt.Println(err)
@@ -59,10 +73,10 @@ func CreateUser(ctx *gin.Context) {
 		return
 	}
 
-	user.Name = ctx.Query("name")
-	passWorld := ctx.Query("paw")
-	rePassWorld := ctx.Query("rePaw")
-	if passWorld != rePassWorld {
+	user.Name = requestRegisterUser.UserName
+	//passWorld := ctx.Query("paw")
+	//rePassWorld := ctx.Query("rePaw")
+	if requestRegisterUser.UserRePwd != requestRegisterUser.UserPwd {
 		ctx.JSON(-1, gin.H{
 			"message": "两次密码不一致,请检查",
 		})
@@ -73,10 +87,10 @@ func CreateUser(ctx *gin.Context) {
 	//获取一个随机数做盐值 很糙,需要更厉害的
 	salt := fmt.Sprintf("%06d", rand.Int31())
 	user.Salt = salt
-	user.Password = utils.MakePassword(passWorld, salt)
+	user.Password = utils.MakePassword(requestRegisterUser.UserPwd, salt)
 
-	user.PhoneNum = ctx.Query("phoneNum")
-	user.Email = ctx.Query("email")
+	user.PhoneNum = requestRegisterUser.UserPhoneNum
+	user.Email = requestRegisterUser.UserEmail
 	models.CreateUser(user)
 	ctx.JSON(200, gin.H{
 		"message": "添加成功",
@@ -138,6 +152,40 @@ func UpdateUser(ctx *gin.Context) {
 	models.UpdateUser(user)
 	ctx.JSON(200, gin.H{
 		"message": "更新成功",
+	})
+}
+
+func GetUserByName(ctx *gin.Context) {
+	var requestRegisterUser struct {
+		// 这里json就是错的 帮不上
+		UserName string `json:"name" form:"name"`
+	}
+	// 将前端发送的JSON数据绑定到requestData结构体中
+	if err := ctx.ShouldBindQuery(&requestRegisterUser); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"code":    http.StatusBadRequest,
+			"message": "无效的请求数据",
+		})
+		return
+	}
+	fmt.Println("username=", ctx.Query("name"))
+	fmt.Println("username2=", requestRegisterUser.UserName)
+
+	user, err := models.FindUserByName(requestRegisterUser.UserName)
+	fmt.Println("user= ", user)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"code":    http.StatusBadRequest,
+			"message": "无效的请求数据",
+		})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{
+		"code": http.StatusOK,
+		"user": gin.H{
+			"ID":   user.ID,
+			"Name": user.Name,
+		},
 	})
 }
 

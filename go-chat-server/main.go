@@ -21,7 +21,11 @@ func init() {
 func main() {
 	r := routers.Router()
 	r.Use(cors.Default())
-	err := r.Run(":8080")
+	// 获取本机ip地址
+	ip := utils.GetLocalIP2()
+	//ip = append(ip, )
+	fmt.Println(ip)
+	err := r.Run(ip[0] + ":8080")
 	if err != nil {
 		fmt.Println("启动失败")
 		return

@@ -21,10 +21,6 @@ var rwLocker sync.RWMutex
 
 // Chat 需要: 发送者ID,接受者ID,消息类型 发送的内容 发送类型
 func Chat(writer http.ResponseWriter, request *http.Request) {
-	// 获取参数并检验token 还没做
-	// token := query.Get("token")
-	// fmt.Println("连接成功")
-	// 这里获取到相关参数 但是并没有在建立连接的时候给出来?
 	query := request.URL.Query()
 	userId := query.Get("userId")
 	// userId应该是唯一的建立连接
@@ -54,10 +50,10 @@ func Chat(writer http.ResponseWriter, request *http.Request) {
 	}).Upgrade(writer, request, nil)
 	// 以上我们完成了ws的链接 以下我们得到了地址和端口
 	// remote 是客户端的ip
-	fmt.Println(conn.RemoteAddr().Network())
-	fmt.Println(conn.RemoteAddr().String())
+	fmt.Println("conn.RemoteAddr().Network()", conn.RemoteAddr().Network())
+	fmt.Println("conn.RemoteAddr().String()", conn.RemoteAddr().String())
 	// 本地是8080 也就是服务端
-	fmt.Println(conn.LocalAddr().String())
+	fmt.Println("conn.LocalAddr().String()", conn.LocalAddr().String())
 
 	if err != nil {
 		fmt.Println(err)
@@ -65,7 +61,6 @@ func Chat(writer http.ResponseWriter, request *http.Request) {
 	}
 
 	// 获取连接
-
 	node := &serviceModels.Node{
 		UserId:    userIdInt,
 		Conn:      conn,
@@ -74,12 +69,11 @@ func Chat(writer http.ResponseWriter, request *http.Request) {
 		GroupSets: set.New(set.ThreadSafe),
 	}
 	// 用户关系 先不搞
-
 	clientMap.Store(userIdInt, node)
-	// 完成发送的逻辑 就是开始实时准备发送消息
+	// 完成发送的逻辑 就是开始实时准备发送消息 私聊
 	go sendProc(node, targetIdInt)
 	// 完成接收的逻辑
-	// 实时准备接收消息
+	// 实时准备接收消息 根据用户ID 找到对应的用户 然后发接收属于你的信息
 	go receProc(node, userIdInt)
 	sendMsg(userIdInt, []byte("欢迎"))
 }
@@ -90,28 +84,11 @@ func sendProc(node *serviceModels.Node, targetId int64) {
 		select {
 		// 进来很多条消息
 		case data := <-node.DataQueue:
-			// 这里只是文本? 写出去 但是到那里呢?
-			// 以下只是测试
-			//if node.UserId == 1 {
-			//	if otherNode, ok := clientMap.Load(2); ok {
-			//		err := otherNode.Conn.WriteMessage(websocket.TextMessage, data)
-			//		if err != nil {
-			//			fmt.Println(err)
-			//			return
-			//		}
-			//	}
-			//} else if node.UserId == 2 {
-			//	if otherNode, ok := clientMap.Load(1); ok {
-			//		err := otherNode.Conn.WriteMessage(websocket.TextMessage, data)
-			//		if err != nil {
-			//			fmt.Println(err)
-			//			return
-			//		}
-			//	}
-			//}
+			// 看这个用户是否在线
 			if otherNode, ok := clientMap.Load(targetId); ok {
-				//err := otherNode.Conn.WriteMessage(websocket.TextMessage, data)
+				// 在线的话 和他建立链接 发送消息 第一个是消息类型 第二个是消息
 				err := otherNode.Conn.WriteMessage(websocket.TextMessage, data)
+				fmt.Println(targetId, "ws>>>>>>>", string(data))
 				if err != nil {
 					fmt.Println(err)
 					return
@@ -119,32 +96,37 @@ func sendProc(node *serviceModels.Node, targetId int64) {
 				continue
 			} else {
 				// 不在线发给自己
+				fmt.Println(targetId, "ws>>>不在线发给自己>>>>", string(data))
 				err := node.Conn.WriteMessage(websocket.TextMessage, []byte("你要找的人不在线"))
 				if err != nil {
 					fmt.Println(err)
 					return
 				}
 			}
-			//err := node.Conn.WriteMessage(websocket.TextMessage, data)
-			//if err != nil {
-			//	fmt.Println(err)
-			//	return
-			//}
 		}
 	}
 }
 
-// receProc 接收消息 服务齐接收消息
+// receProc 接收消息 服务器接收消息
 func receProc(node *serviceModels.Node, userId int64) {
 	for {
-		_, message, err := node.Conn.ReadMessage()
-		if err != nil {
+		//_, message, err := node.Conn.ReadMessage()
+		//if err != nil {
+		//	return
+		//}
+		//// 广播消息 ? 不是私聊吗?
+		////broadMsg(message)
+		//fmt.Println(userId, "ws<<<<<<<", string(message))
+		//// 把消息发送给自己
+		//sendMsg(node.UserId, message)
+		if _, message, err := node.Conn.ReadMessage(); err != nil {
+			fmt.Println(err)
 			return
+		} else {
+			fmt.Println(userId, "ws<<<<<<<", string(message))
+			// 把消息发送给自己
+			sendMsg(node.UserId, message)
 		}
-		// 广播消息 ? 不是私聊吗?
-		//broadMsg(message)
-		fmt.Println(userId, "ws<<<<<<<", string(message))
-		sendMsg(node.UserId, message)
 	}
 }
 

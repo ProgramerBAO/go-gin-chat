@@ -1,4 +1,4 @@
-# vue4-interact-with-backend
+# go-gin-chat-web
 
 This template should help get you started developing with Vue 3 in Vite.
 

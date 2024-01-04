@@ -4,7 +4,7 @@ import "sync"
 
 // 这里存放需要的结构体
 
-// ClientMap 代表键类型为int、值类型为string的并发安全字典。
+// ClientMap 代表键类型为int、值类型为string的并发安全字典。 存放客户端连接信息
 type ClientMap struct {
 	m sync.Map
 }

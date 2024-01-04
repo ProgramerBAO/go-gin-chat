@@ -49,10 +49,10 @@ func DeleteUserByName(user *UserBasic) *gorm.DB {
 	return utils.DB.Where("name = ?", user.Name).Delete(user)
 }
 
-func UpdateUser(user *UserBasic) *gorm.DB {
+func UpdateUser(user *UserBasic) {
 	// return utils.DB.Model(user).Where("id = ?", user.ID).Update("name", user.Name)
 	// 更新多个字段
-	return utils.DB.Model(user).Updates(user)
+	utils.DB.Model(user).Updates(user)
 }
 
 // AddJWT 将token增加到用户中,

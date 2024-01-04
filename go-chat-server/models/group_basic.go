@@ -10,6 +10,7 @@ type GroupBasic struct {
 	Icon      string // 群头像
 	Type      int    // 群类型
 	Desc      string // 描述
+	Members   []uint // 群成员ID 有问题
 
 }
 
